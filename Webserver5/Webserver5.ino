@@ -24,12 +24,13 @@ char webpage[] PROGMEM = R"=====(
         window.addEventListener('deviceorientation', deviceOrientationHandler, false);
         
         var myVar = setInterval(sanity, 300);
-
+        /*
         function sanity() {
             var request = new XMLHttpRequest();
-            request.open("GET", "Xml request being sent" + " ", false);
-            request.send(null);
+            request.open("POST", "/test", false);
+            request.send("ThisIsNotaTest");
         }
+        */
         function deviceOrientationHandler(eventData)
         {
             var tiltLR = eventData.gamma;
@@ -40,11 +41,11 @@ char webpage[] PROGMEM = R"=====(
             document.getElementById("doTiltFB").innerHTML = Math.round(tiltFB);
             document.getElementById("doDirection").innerHTML = Math.round(dir);
   
-            var Roll  = tiltLR.toString();
-            var Pitch = tiltFB.toString();
+            var Roll  = Math.round(tiltLR);
+            var Pitch = Math.round(tiltFB);
             var request = new XMLHttpRequest();
-            request.open("GET", Roll + " " + Pitch + " ", true);
-            request.send(null);
+            request.open("POST","/Data", true);
+            request.send(Roll.toString() + " " + Pitch.toString());
         }
         </script>
   
@@ -72,14 +73,6 @@ void HandleClient() {
   
   */
   server.send(200, "text/html", webpage); // Send a response to the client asking for input
-  Serial.print("here 3");
-  if (server.args() > 0 ) { // Arguments were received
-    Serial.print("here");
-    for ( uint8_t i = 0; i < server.args(); i++ ) {
-      Serial.print(server.argName(i)); // Display the argument
-      Serial.print(server.arg(i));
-    }
-  }
 }
 
 void setup()
@@ -94,6 +87,7 @@ void setup()
   Serial.println(myIP);
 
   server.on("/", HandleClient);
+  server.on("/Data", Data);
   //server.on("/ledstate",getLEDState);
   server.begin();
 }
@@ -102,10 +96,13 @@ void loop()
 {
   server.handleClient();
   if (server.args() > 0 ) { // Arguments were received
-    Serial.print("here 2.0");
     for ( uint8_t i = 0; i < server.args(); i++ ) {
-      Serial.print(server.argName(i)); // Display the argument
-      Serial.print(server.arg(i));
-    }
-  }  
+      Serial.println(server.arg(i));
+    } 
+}
+}
+
+void Data()
+{
+  Serial.println("inData");
 }
