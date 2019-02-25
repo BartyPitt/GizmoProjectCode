@@ -6,6 +6,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h> 
+#include <AccelStepper.h>
 
 ESP8266WebServer server(80);
 uint8_t pin_led = 2;
@@ -23,14 +24,19 @@ char webpage[] PROGMEM = R"=====(
         <script>
         window.addEventListener('deviceorientation', deviceOrientationHandler, false);
         
-        var myVar = setInterval(sanity, 300);
-        /*
+        var myVar = setInterval(sanity, 100);
+        var Roll = 0
+        var Pitch = 0
+        var Count = 0
+        
         function sanity() {
+            Count ++;
+            console.log(Count);
             var request = new XMLHttpRequest();
-            request.open("POST", "/test", false);
-            request.send("ThisIsNotaTest");
+            request.open("POST","/Data", true);
+            request.send(Count);
         }
-        */
+        
         function deviceOrientationHandler(eventData)
         {
             var tiltLR = eventData.gamma;
@@ -41,11 +47,8 @@ char webpage[] PROGMEM = R"=====(
             document.getElementById("doTiltFB").innerHTML = Math.round(tiltFB);
             document.getElementById("doDirection").innerHTML = Math.round(dir);
   
-            var Roll  = Math.round(tiltLR);
-            var Pitch = Math.round(tiltFB);
-            var request = new XMLHttpRequest();
-            request.open("POST","/Data", true);
-            request.send(Roll.toString() + " " + Pitch.toString());
+            Roll  = Math.round(tiltLR);
+            Pitch = Math.round(tiltFB);
         }
         </script>
   
@@ -68,12 +71,14 @@ char webpage[] PROGMEM = R"=====(
   </html>
   )=====";
 
-void HandleClient() {
-  /*
-  
-  */
+void MainPage() 
+{ 
   server.send(200, "text/html", webpage); // Send a response to the client asking for input
 }
+
+//stepper motor Prememptive
+AccelStepper stepperLong;
+AccelStepper stepperRound;
 
 void setup()
 {
@@ -86,23 +91,37 @@ void setup()
   Serial.print("IP Address: ");
   Serial.println(myIP);
 
-  server.on("/", HandleClient);
-  server.on("/Data", Data);
-  //server.on("/ledstate",getLEDState);
+  server.on("/",MainPage); //listens on these two channels
+  server.on("/Data", Data); //when you get a request for data put into the "data" function
   server.begin();
+
+  //Now for the steppers
+  stepperLong.setMaxSpeed(1000);
+  stepperLong.setAcceleration(200);
+  stepperLong.moveTo(5000);
+  stepperRound.setMaxSpeed(1000);
+  stepperRound.setAcceleration(200);
+  stepperRound.moveTo(5000);
 }
 
 void loop()
 {
   server.handleClient();
-  if (server.args() > 0 ) { // Arguments were received
-    for ( uint8_t i = 0; i < server.args(); i++ ) {
-      Serial.println(server.arg(i));
-    } 
-}
+  /*
+  if (stepper.distanceToGo() == 0)
+      stepper.moveTo(-stepper.currentPosition());
+    stepper.run();
+  */
+  
 }
 
 void Data()
 {
+  server.send(200,"text/html","");
   Serial.println("inData");
+  if (server.args() > 0 ) { // Arguments were received
+    for ( uint8_t i = 0; i < server.args(); i++ ) {
+      Serial.println(server.arg(i));
+      }
+    }
 }
