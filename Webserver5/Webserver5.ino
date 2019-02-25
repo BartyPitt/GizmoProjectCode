@@ -13,6 +13,15 @@ uint8_t pin_led = 2;
 char* ssid = "Gizmo Test";
 char* password = "";
 
+int Xv = 0;
+int Yv = 0;
+int Rv = 0;
+int Lv = 0;
+
+//stepper motor Prememptive
+AccelStepper stepperLong(1,16,0);
+AccelStepper stepperRound;
+
 char webpage[] PROGMEM = R"=====(
   <html lang="en">
       <head>
@@ -24,13 +33,11 @@ char webpage[] PROGMEM = R"=====(
         <script>
         window.addEventListener('deviceorientation', deviceOrientationHandler, false);
         
-        var myVar = setInterval(sanity, 100);
+        var myVar = setInterval(sanity, 500);
         var Roll = 0
         var Pitch = 0
-        var Count = 0
         
         function sanity() {
-            Count ++;
             console.log(Count);
             var request = new XMLHttpRequest();
             request.open("POST","/Data", true);
@@ -76,9 +83,6 @@ void MainPage()
   server.send(200, "text/html", webpage); // Send a response to the client asking for input
 }
 
-//stepper motor Prememptive
-AccelStepper stepperLong;
-AccelStepper stepperRound;
 
 void setup()
 {
@@ -107,21 +111,17 @@ void setup()
 void loop()
 {
   server.handleClient();
-  /*
-  if (stepper.distanceToGo() == 0)
-      stepper.moveTo(-stepper.currentPosition());
-    stepper.run();
-  */
-  
 }
 
 void Data()
 {
-  server.send(200,"text/html","");
+  Serial.print("here");
   Serial.println("inData");
   if (server.args() > 0 ) { // Arguments were received
     for ( uint8_t i = 0; i < server.args(); i++ ) {
       Serial.println(server.arg(i));
+      server.send(200,"text/plain","");
       }
     }
+  
 }
