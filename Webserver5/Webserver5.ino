@@ -13,10 +13,10 @@ uint8_t pin_led = 2;
 char* ssid = "Gizmo Test";
 char* password = "";
 
-int Xv = 0;
-int Yv = 0;
-int Rv = 0;
-int Lv = 0;
+int Xpos = 0;
+int Ypos = 0;
+int Rotation = 0;
+int Length = 0;
 
 //stepper motor Prememptive
 AccelStepper stepperLong(1,16,0);
@@ -123,5 +123,26 @@ void Data()
       server.send(200,"text/plain","");
       }
     }
+  
+}
+
+int Rspeed(xSpeed,ySpeed)
+{
+ int targetX = Xpos + xSpeed;
+ int targetY = Ypos + ySpeed;
+ int targetR = atan(targetY/targetX);
+ return targetR - Rotation;
+}
+
+int Lspeed(xSpeed,ySpeed)
+{
+ int targetX = Xpos + xSpeed;
+ int targetY = Ypos + ySpeed;
+ int targetL =  sqrt(pow(xSpeed,2) + pow(ySpeed,2));
+ return targetL - Length;
+}
+
+bool Move(xSpeed,ySpeed)
+{
   
 }
