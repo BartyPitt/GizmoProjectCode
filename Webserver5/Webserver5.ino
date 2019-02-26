@@ -3,22 +3,30 @@
  Attempt 5 ish 
  Why does nothing work :(
 ------------------------------------------------------------------------------*/
+//Libaries
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h> 
 #include <AccelStepper.h>
 
+//Webserver Important Constants
 ESP8266WebServer server(80);
 uint8_t pin_led = 2;
 char* ssid = "Gizmo Test";
 char* password = "";
 
+// Running Varibles
 int Xpos = 0;
 int Ypos = 0;
 int Rotation = 0;
 int Length = 0;
-int Width = 100;
-int Height = 100;
+
+//Running Constants
+#define Width 100
+#define Height 100
+#define TC 300
+#define xOffset 0
+#define yOffset 0
 
 //stepper motor Prememptive
 AccelStepper stepperLong(1,16,0);
@@ -43,7 +51,7 @@ char webpage[] PROGMEM = R"=====(
             console.log(Count);
             var request = new XMLHttpRequest();
             request.open("POST","/Data", true);
-            request.send(Count);
+            request.send(string(Roll) + "," + string(Pitch));
         }
         
         function deviceOrientationHandler(eventData)
@@ -83,6 +91,7 @@ char webpage[] PROGMEM = R"=====(
 void MainPage() 
 { 
   server.send(200, "text/html", webpage); // Send a response to the client asking for input
+  Serial.print("Client has connected probably");
 }
 
 
@@ -113,19 +122,21 @@ void setup()
 void loop()
 {
   server.handleClient();
+  
 }
 
 void Data()
 {
   Serial.print("here");
   Serial.println("inData");
-  if (server.args() > 0 ) { // Arguments were received
+  if (server.args() > 0 ) // Arguments were received
+  { 
     for ( uint8_t i = 0; i < server.args(); i++ ) {
       Serial.println(server.arg(i));
+      UpdateSpeeds(server.arg(i));
       server.send(200,"text/plain","");
       }
-    }
-  
+  }
 }
 
 int Rspeed(int xSpeed,int ySpeed)
@@ -158,8 +169,26 @@ bool Move(int xSpeed,int ySpeed)
   }
 }
 
-bool UpdateXY()
+void UpdateXY()
 {
   Xpos = Length * sin(Rotation);
   Ypos = Length * cos(Rotation);
+}
+
+
+void UpdateSpeeds(String input)
+{
+  String Roll = "";
+  String Pitch = "";
+  for (int i = 0; i < input.length(); i++) 
+  {
+    if (input.substring(i, i+1) == ",") 
+    {
+      Roll = input.substring(0, i).toInt();
+      Pitch = input.substring(i+1).toInt();
+      break;
+    }
+  }
+  UpdateXY();
+  Move(Roll.toInt()*TC,Pitch.toInt()*TC);
 }
