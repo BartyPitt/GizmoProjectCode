@@ -17,6 +17,8 @@ int Xpos = 0;
 int Ypos = 0;
 int Rotation = 0;
 int Length = 0;
+int Width = 100;
+int Height = 100;
 
 //stepper motor Prememptive
 AccelStepper stepperLong(1,16,0);
@@ -126,7 +128,7 @@ void Data()
   
 }
 
-int Rspeed(xSpeed,ySpeed)
+int Rspeed(int xSpeed,int ySpeed)
 {
  int targetX = Xpos + xSpeed;
  int targetY = Ypos + ySpeed;
@@ -134,7 +136,7 @@ int Rspeed(xSpeed,ySpeed)
  return targetR - Rotation;
 }
 
-int Lspeed(xSpeed,ySpeed)
+int Lspeed(int xSpeed,int ySpeed)
 {
  int targetX = Xpos + xSpeed;
  int targetY = Ypos + ySpeed;
@@ -142,7 +144,22 @@ int Lspeed(xSpeed,ySpeed)
  return targetL - Length;
 }
 
-bool Move(xSpeed,ySpeed)
+bool Move(int xSpeed,int ySpeed)
 {
-  
+  if (abs(Xpos + xSpeed) < Width && abs(Ypos + ySpeed) < Height)
+  {
+    stepperRound.setSpeed(Rspeed(xSpeed,ySpeed));
+    stepperLong.setSpeed(Lspeed(xSpeed,ySpeed));
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+bool UpdateXY()
+{
+  Xpos = Length * sin(Rotation);
+  Ypos = Length * cos(Rotation);
 }
