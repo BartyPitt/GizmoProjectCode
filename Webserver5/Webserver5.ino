@@ -12,25 +12,35 @@
 //Webserver Important Constants
 ESP8266WebServer server(80);
 uint8_t pin_led = 2;
-char* ssid = "Gizmo Test";
+char* ssid = "Gizmo Barty";
 char* password = "";
 
 // Running Varibles
 int Xpos = 0;
 int Ypos = 0;
-int Rotation = 0;
-int Length = 0;
+//float Rotation = 0;
+//int Length = 0;
+int RV = 0;
+int LV = 0;
+
 
 //Running Constants
-#define Width 100
-#define Height 100
-#define TC 300
+#define Width 10000
+#define Height 10000
+#define TC 3
 #define xOffset 0
 #define yOffset 0
+#define tpr 17152 //ticks per revolution
+
 
 //stepper motor Prememptive
-AccelStepper stepperLong(1,16,0);
-AccelStepper stepperRound;
+AccelStepper stepperLong(1,5,16);
+AccelStepper stepperRound(1,0,4);
+
+
+//kinda running Costants
+#define Rotation stepperRound.currentPosition()
+#define Length stepperLong.currentPosition()
 
 char webpage[] PROGMEM = R"=====(
   <html lang="en">
@@ -43,15 +53,15 @@ char webpage[] PROGMEM = R"=====(
         <script>
         window.addEventListener('deviceorientation', deviceOrientationHandler, false);
         
-        var myVar = setInterval(sanity, 500);
+        var myVar = setInterval(sanity, 750);
         var Roll = 0
         var Pitch = 0
         
         function sanity() {
-            console.log(Count);
             var request = new XMLHttpRequest();
             request.open("POST","/Data", true);
-            request.send(string(Roll) + "," + string(Pitch));
+            request.timeout = 500;
+            request.send(Roll.toString() + "," + Pitch.toString());
         }
         
         function deviceOrientationHandler(eventData)
@@ -66,6 +76,14 @@ char webpage[] PROGMEM = R"=====(
   
             Roll  = Math.round(tiltLR);
             Pitch = Math.round(tiltFB);
+            if (Roll == 0)
+            {
+              Roll = 1
+            }
+            if (Pitch == 0)
+            {
+              Pitch = 1
+            }
         }
         </script>
   
@@ -122,13 +140,15 @@ void setup()
 void loop()
 {
   server.handleClient();
+  stepperLong.setSpeed(LV);
+  stepperRound.setSpeed(RV);
+  stepperLong.run();
+  stepperRound.run();
   
 }
 
 void Data()
 {
-  Serial.print("here");
-  Serial.println("inData");
   if (server.args() > 0 ) // Arguments were received
   { 
     for ( uint8_t i = 0; i < server.args(); i++ ) {
@@ -143,8 +163,14 @@ int Rspeed(int xSpeed,int ySpeed)
 {
  int targetX = Xpos + xSpeed;
  int targetY = Ypos + ySpeed;
- int targetR = atan(targetY/targetX);
- return targetR - Rotation;
+ float targetR = atan(targetY/targetX);
+ Serial.println("Target R :");
+ Serial.println(targetR);
+ Serial.println("TargetX");
+ Serial.println(targetX);
+ Serial.println("TargetY");
+ Serial.println(targetY);
+ return (targetR - Rotation)*tpr;
 }
 
 int Lspeed(int xSpeed,int ySpeed)
@@ -159,8 +185,11 @@ bool Move(int xSpeed,int ySpeed)
 {
   if (abs(Xpos + xSpeed) < Width && abs(Ypos + ySpeed) < Height)
   {
-    stepperRound.setSpeed(Rspeed(xSpeed,ySpeed));
-    stepperLong.setSpeed(Lspeed(xSpeed,ySpeed));
+    RV = Rspeed(xSpeed,ySpeed);
+    LV = Lspeed(xSpeed,ySpeed);
+    Serial.println("Lv, Rv");
+    Serial.println(String(LV));
+    Serial.println(String(RV));
     return true;
   }
   else
@@ -174,6 +203,7 @@ void UpdateXY()
   Xpos = Length * sin(Rotation);
   Ypos = Length * cos(Rotation);
 }
+
 
 
 void UpdateSpeeds(String input)
@@ -190,5 +220,11 @@ void UpdateSpeeds(String input)
     }
   }
   UpdateXY();
-  Move(Roll.toInt()*TC,Pitch.toInt()*TC);
+  /*
+  Serial.println("pitch");
+  Serial.print(Pitch.toInt()*3);
+  Serial.println("Roll");
+  Serial.print(Roll.toInt()*3);
+  */
+  Move(Roll.toInt()*TC , Pitch.toInt()*TC );
 }
