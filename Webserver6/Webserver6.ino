@@ -31,7 +31,12 @@ int LV = 0;
 #define xOffset 0 //Currently unused but is designed so that I can have an offset for the square
 #define yOffset 0
 #define tpr 17152 //ticks per revolution
-#define tpcm 721 // ticks per cm of travel Diameter 2.6cm with 6,400 ticks per revolution
+//#define tpcm 7210 // ticks per cm of travel Diameter 2.6cm with 6,400 ticks per revolution
+#define pi = 3.14159
+//#define radianTicks 10777
+#define tpcm 1000
+#define radianTicks 10777
+
 
 
 //stepper motor Prememptive
@@ -141,8 +146,8 @@ void setup()
 void loop()
 {
   server.handleClient();
-  stepperLong.setSpeed(LV);
-  stepperRound.setSpeed(RV);
+  stepperLong.moveTo(LV);
+  stepperRound.moveTo(RV);
   stepperLong.run();
   stepperRound.run();
   
@@ -153,45 +158,53 @@ void Data()
   if (server.args() > 0 ) // Arguments were received
   { 
     for ( uint8_t i = 0; i < server.args(); i++ ) {
-      Serial.println(server.arg(i));
+      //Serial.println(server.arg(i));
       UpdateSpeeds(server.arg(i));
       server.send(200,"text/plain","");
       }
   }
 }
 
-int Rspeed(int xSpeed,int ySpeed)
+int RPos(int targetX,int targetY) //int x and y in ticks
 {
- int targetX = Xpos + xSpeed;
- int targetY = Ypos + ySpeed;
- float targetR = atan(targetY/targetX);
+ float targetR = atan2(targetY,targetX); //currently in radians
  Serial.println("Target R :");
  Serial.println(targetR);
+ /*
  Serial.println("TargetX");
  Serial.println(targetX);
  Serial.println("TargetY");
  Serial.println(targetY);
- return (targetR - Rotation)*tpr;
+ */
+ return (targetR)*radianTicks;
 }
 
-int Lspeed(int xSpeed,int ySpeed)
+int LPos(int targetX,int targetY) //xspeed yspeed in ticks
 {
- int targetX = Xpos + xSpeed;
- int targetY = Ypos + ySpeed;
- int targetL =  sqrt(pow(xSpeed,2) + pow(ySpeed,2));
- return (targetL - Length)*tpcm;
+ int targetL =  sqrt(pow(targetX,2) + pow(targetY,2));
+ return (targetL);
 }
 
 bool Move(int xSpeed,int ySpeed)
 {
   if (abs(Xpos + xSpeed) < Width && abs(Ypos + ySpeed) < Height)
   {
-    RV = Rspeed(xSpeed,ySpeed);
-    LV = Lspeed(xSpeed,ySpeed);
+    int targetX = Xpos + xSpeed;
+    int targetY = Ypos + ySpeed;
+    RV = RPos(targetX,targetY);
+    LV = LPos(targetX,targetY);
+    Xpos = targetX;
+    Ypos = targetY;
     Serial.println("Lv, Rv");
     Serial.println(String(LV));
     Serial.println(String(RV));
+   /*
+    Serial.println("Xspeed , yspeed");
+    Serial.println(xSpeed);
+    Serial.println(ySpeed);
+   */
     return true;
+   
   }
   else
   {
@@ -201,8 +214,8 @@ bool Move(int xSpeed,int ySpeed)
 
 void UpdateXY()
 {
-  Xpos = Length * sin(Rotation);
-  Ypos = Length * cos(Rotation);
+  Xpos = Length * sin(Rotation/radianTicks);
+  Ypos = Length * cos(Rotation/radianTicks);
 }
 
 
@@ -218,14 +231,12 @@ void UpdateSpeeds(String input)
       Roll = input.substring(0, i).toInt();
       Pitch = input.substring(i+1).toInt();
       break;
+      
     }
   }
-  UpdateXY();
+  //UpdateXY();
   /*
-  Serial.println("pitch");
-  Serial.print(Pitch.toInt()*3);
-  Serial.println("Roll");
-  Serial.print(Roll.toInt()*3);
+
   */
   Move(Roll.toInt()*TC , Pitch.toInt()*TC );
 }
