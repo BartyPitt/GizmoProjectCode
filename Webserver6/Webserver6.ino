@@ -33,7 +33,7 @@ int LV = 0;
 #define tpr 17152 //ticks per revolution
 #define pi = 3.14159
 #define tpcm 783 //ticks per cm of movement
-#define radianTicks 15005
+#define radianTicks 2729
 
 
 
@@ -135,17 +135,13 @@ void setup()
   //Now for the steppers
   stepperLong.setMaxSpeed(1000);
   stepperLong.setAcceleration(200);
-  stepperLong.moveTo(5000);
   stepperRound.setMaxSpeed(1000);
   stepperRound.setAcceleration(200);
-  stepperRound.moveTo(5000);
 }
 
 void loop()
 {
   server.handleClient();
-  stepperLong.moveTo(LV);
-  stepperRound.moveTo(RV);
   stepperLong.run();
   stepperRound.run();
   
@@ -191,6 +187,12 @@ bool Move(int xSpeed,int ySpeed)
     LV = LPos(targetX,targetY);
     Xpos = targetX;
     Ypos = targetY;
+    if (LV < 0)
+      LV = 0;
+    else if (LV > 6500)
+      LV = 6500;
+    stepperLong.moveTo(LV);
+    stepperRound.moveTo(RV);
     /*
     Serial.println("Lv, Rv");
     Serial.println(String(LV));
