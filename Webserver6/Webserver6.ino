@@ -25,17 +25,15 @@ int LV = 0;
 
 
 //Running Constants
-#define Width 14420
-#define Height 10815
+#define Width 1860 //messured in ticks
+#define Height 1371
 #define TC 3 //Constant for the change between tilt of phone and speed of movement
 #define xOffset 0 //Currently unused but is designed so that I can have an offset for the square
 #define yOffset 0
 #define tpr 17152 //ticks per revolution
-//#define tpcm 7210 // ticks per cm of travel Diameter 2.6cm with 6,400 ticks per revolution
 #define pi = 3.14159
-//#define radianTicks 10777
-#define tpcm 1000
-#define radianTicks 10777
+#define tpcm 783 //ticks per cm of movement
+#define radianTicks 15005
 
 
 
@@ -168,14 +166,12 @@ void Data()
 int RPos(int targetX,int targetY) //int x and y in ticks
 {
  float targetR = atan2(targetY,targetX); //currently in radians
- Serial.println("Target R :");
- Serial.println(targetR);
- /*
+ //Serial.println("Target R :");
+ //Serial.println(targetR);
  Serial.println("TargetX");
  Serial.println(targetX);
  Serial.println("TargetY");
  Serial.println(targetY);
- */
  return (targetR)*radianTicks;
 }
 
@@ -187,7 +183,7 @@ int LPos(int targetX,int targetY) //xspeed yspeed in ticks
 
 bool Move(int xSpeed,int ySpeed)
 {
-  if (abs(Xpos + xSpeed) < Width && abs(Ypos + ySpeed) < Height)
+  if (abs(Xpos + xSpeed) < Width/2 && abs(Ypos + ySpeed) < Height/2)
   {
     int targetX = Xpos + xSpeed;
     int targetY = Ypos + ySpeed;
@@ -195,10 +191,11 @@ bool Move(int xSpeed,int ySpeed)
     LV = LPos(targetX,targetY);
     Xpos = targetX;
     Ypos = targetY;
+    /*
     Serial.println("Lv, Rv");
     Serial.println(String(LV));
     Serial.println(String(RV));
-   /*
+   
     Serial.println("Xspeed , yspeed");
     Serial.println(xSpeed);
     Serial.println(ySpeed);
