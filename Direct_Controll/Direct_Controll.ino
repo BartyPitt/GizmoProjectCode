@@ -27,7 +27,7 @@ int LV = 0;
 //Running Constants
 #define Width 3721//messured in ticks
 #define Height 2742
-#define TC 3 //Constant for the change between tilt of phone and speed of movement
+#define TC 6 //Constant for the change between tilt of phone and speed of movement
 #define xOffset 0 //Currently unused but is designed so that I can have an offset for the square
 #define yOffset 0
 #define tpr 17152 //ticks per revolution
@@ -159,40 +159,18 @@ void Data()
   }
 }
 
-int RPos(int targetX,int targetY) //int x and y in ticks
-{
- float targetR = atan2(targetY,targetX); //currently in radians
- //Serial.println("Target R :");
- //Serial.println(targetR);
- Serial.println("TargetX");
- Serial.println(targetX);
- Serial.println("TargetY");
- Serial.println(targetY);
- return (targetR)*radianTicks;
-}
-
-int LPos(int targetX,int targetY) //xspeed yspeed in ticks
-{
- int targetL =  sqrt(pow(targetX,2) + pow(targetY,2));
- Serial.println("Target L :");
- Serial.println(targetL);
- return (targetL);
-}
 
 bool Move(int xSpeed,int ySpeed)
 {
-  if (abs(Xpos + xSpeed) < Width/2 && abs(Ypos + ySpeed) < Height/2)
-  {
-    int targetX = Xpos + xSpeed;
-    int targetY = Ypos + ySpeed;
-    RV = RPos(targetX,targetY);
-    LV = LPos(targetX,targetY);
-    Xpos = targetX;
-    Ypos = targetY;
+    RV = RV + xSpeed;
+    LV = LV + ySpeed;
     if (LV < 0)
-      LV = 0;
-    else if (LV > 6500)
-      LV = 6500;
+    {
+      LV = - LV;
+    }
+    if (LV > 4000)
+      LV = 4000;
+      
     stepperLong.moveTo(LV);
     stepperRound.moveTo(RV);
     
@@ -204,20 +182,8 @@ bool Move(int xSpeed,int ySpeed)
     Serial.println(xSpeed);
     Serial.println(ySpeed);
    */
-    return true;
-   
-  }
-  else
-  {
-    return false;
-  }
 }
 
-void UpdateXY()
-{
-  Xpos = Length * sin(Rotation/radianTicks);
-  Ypos = Length * cos(Rotation/radianTicks);
-}
 
 
 
@@ -235,9 +201,5 @@ void UpdateSpeeds(String input)
       
     }
   }
-  //UpdateXY();
-  /*
-
-  */
   Move(Roll.toInt()*TC , Pitch.toInt()*TC );
 }
