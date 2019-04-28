@@ -1,0 +1,61 @@
+<html lang="en">
+      <head>
+          <meta charset="utf-8">
+          <title>ESP8266 Web Page Text to Serial</title>
+      </head>
+
+      <body>
+        <script>
+        window.addEventListener('deviceorientation', deviceOrientationHandler, false); //When device oriantation changes run device orinantation function
+
+        var myVar = setInterval(sanity, 750); //Every 750 ms runs the setIntervalFunction
+        var Roll = 0
+        var Pitch = 0
+
+        function sanity() {
+            var request = new XMLHttpRequest(); //creates a xml request
+            request.open("POST","/Data", true); //Post the xml request to /data
+            request.timeout = 500; //if it takes longer than 500ms cancel it
+            request.send(Roll.toString() + "," + Pitch.toString()); //send the request containing pitch and roll varibles
+        }
+
+        function deviceOrientationHandler(eventData)
+        {
+            var tiltLR = eventData.gamma; //getting the oriantation putting into varibles
+            var tiltFB = eventData.beta;
+            var dir    = eventData.alpha;
+
+            document.getElementById("doTiltLR").innerHTML = Math.round(tiltLR); //puts data into the table
+            document.getElementById("doTiltFB").innerHTML = Math.round(tiltFB);
+            document.getElementById("doDirection").innerHTML = Math.round(dir);
+
+            Roll  = Math.round(tiltLR);
+            Pitch = Math.round(tiltFB);
+            if (Roll == 0)
+            {
+              Roll = 1
+            }
+            if (Pitch == 0)
+            {
+              Pitch = 1
+            }
+        }
+        </script>
+
+          <p><b>Taking an Accelemetor Reading:</b></p>
+          <table class="table table-striped table-bordered">
+            <tr>
+              <td>Tilt Left/Right [gamma]</td>
+              <td id="doTiltLR"></td>
+            </tr>
+            <tr>
+              <td>Tilt Front/Back [beta]</td>
+              <td id="doTiltFB"></td>
+            </tr>
+            <tr>
+              <td>Direction [alpha]</td>
+              <td id="doDirection"></td>
+            </tr>
+            </table>
+      </body>
+  </html>

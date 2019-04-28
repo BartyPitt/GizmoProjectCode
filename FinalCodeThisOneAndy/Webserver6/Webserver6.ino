@@ -1,7 +1,12 @@
 /*
  Barty Pitt
- Attempt 12 ish 
- Why does nothing work :(
+ Attempt 12 Playing arround with the speeds
+
+ Code taken from nodeMcu Webserver Example code 
+ Weird Varible memory trick taken from https://www.arduino.cc/reference/en/language/variables/utilities/progmem/
+ No explaination for it provided in code.
+ Html code adapted from https://www.sitepoint.com/using-device-orientation-html5/
+ To see commented html code it is in a seperate file.
 ------------------------------------------------------------------------------*/
 //Libaries
 #include <ESP8266WiFi.h>
@@ -45,6 +50,12 @@ AccelStepper stepperRound(1,0,4);
 //Makes the code much easier to read later on
 #define Rotation stepperRound.currentPosition()
 #define Length stepperLong.currentPosition()
+
+/*
+ THE HTML IS NOT COMMENTED HERE AS IT BREAKS THE CODE LOOK AT THE SEPERATE HTML FILE FOR COMMENTS sorry andy.
+ */
+
+
 
 char webpage[] PROGMEM = R"=====(
   <html lang="en">
@@ -121,7 +132,7 @@ void setup()
 {
   pinMode(pin_led, OUTPUT);
   WiFi.softAP(ssid,password);
-  IPAddress myIP = WiFi.softAPIP();
+  IPAddress myIP = WiFi.softAPIP(); //starts ap point
   
   Serial.begin(115200);
   Serial.println("");
@@ -141,20 +152,20 @@ void setup()
 
 void loop()
 {
-  server.handleClient();
-  stepperLong.run();
-  stepperRound.run();
+  server.handleClient(); //checks to see if a request has been sent to the nodeMcu
+  stepperLong.run(); //move one stepper
+  stepperRound.run(); // move the other one
   
 }
 
-void Data()
+void Data() //when a request is sent into the data channel it send a responce saying the data has been recived is sent.
 {
   if (server.args() > 0 ) // Arguments were received
   { 
     for ( uint8_t i = 0; i < server.args(); i++ ) {
       //Serial.println(server.arg(i));
-      UpdateSpeeds(server.arg(i));
-      server.send(200,"text/plain","");
+      UpdateSpeeds(server.arg(i)); //Put through the data recieved into somewhere more usefull
+      server.send(200,"text/plain",""); // The actual Responce
       }
   }
 }
@@ -168,7 +179,7 @@ int RPos(int targetX,int targetY) //int x and y in ticks
  Serial.println(targetX);
  Serial.println("TargetY");
  Serial.println(targetY);
- return (targetR)*radianTicks;
+ return (targetR)*radianTicks; //basically returns the target Rotation in ticks
 }
 
 int LPos(int targetX,int targetY) //xspeed yspeed in ticks
@@ -176,10 +187,10 @@ int LPos(int targetX,int targetY) //xspeed yspeed in ticks
  int targetL =  sqrt(pow(targetX,2) + pow(targetY,2));
  Serial.println("Target L :");
  Serial.println(targetL);
- return (targetL);
+ return (targetL); //Returns the target length in ticks
 }
 
-bool Move(int xSpeed,int ySpeed)
+bool Move(int xSpeed,int ySpeed) // Tries to update the target position. If out of bounds returns false.
 {
   if (abs(Xpos + xSpeed) < Width/2 && abs(Ypos + ySpeed) < Height/2)
   {
@@ -213,7 +224,7 @@ bool Move(int xSpeed,int ySpeed)
   }
 }
 
-void UpdateXY()
+void UpdateXY() //updates the current x and Y possition
 {
   Xpos = Length * sin(Rotation/radianTicks);
   Ypos = Length * cos(Rotation/radianTicks);
@@ -221,11 +232,11 @@ void UpdateXY()
 
 
 
-void UpdateSpeeds(String input)
+void UpdateSpeeds(String input) //takes the data that is sent into the data function
 {
   String Roll = "";
   String Pitch = "";
-  for (int i = 0; i < input.length(); i++) 
+  for (int i = 0; i < input.length(); i++)  // taking the string and spliting it up in a useful way , also designed so that I can send it a string of various lengths
   {
     if (input.substring(i, i+1) == ",") 
     {
@@ -239,5 +250,5 @@ void UpdateSpeeds(String input)
   /*
 
   */
-  Move(Roll.toInt()*TC , Pitch.toInt()*TC );
+  Move(Roll.toInt()*TC , Pitch.toInt()*TC ); //updates where it is aiming to go
 }
